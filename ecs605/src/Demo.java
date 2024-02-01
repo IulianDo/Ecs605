@@ -220,6 +220,8 @@ public class Demo extends Component implements ActionListener {
         });
         Demo de = new Demo();
         f.add("Center", de);
+        Demo da = new Demo();
+        f.add("West", da);
         Button undoButton = new Button("Undo");
         undoButton.setActionCommand("Undo");
         undoButton.addActionListener(de);
