@@ -19,7 +19,8 @@ public class Demo extends Component implements ActionListener {
 
     int opIndex;  //option index for
     int lastOp;
-
+    float scale = 1f;
+    float intensify = 1f;
     private BufferedImage bi, biFiltered;   // the input image saved as bi;//
     int w, h;
 
@@ -68,11 +69,25 @@ public class Demo extends Component implements ActionListener {
         lastOp = opIndex;
         opIndex = i;
     }
+    void setScale(float i) {
+        if (i > 2f)
+        {
+            scale = 2;
+        }
+        else if(i < 0f )
+        {
+            scale = 0;
+        }
+        else
+        {
+            scale = i;
+        }
+    }
 
     public void paint(Graphics g) { //  Repaint will call this function so the image will change.
         filterImage();
-
-        g.drawImage(biFiltered, 0, 0, null);
+        resizeImage();
+        g.drawImage(biFiltered, 0, 0,Math.round(w*scale),Math.round(h*scale), null);
     }
 
 
@@ -155,7 +170,41 @@ public class Demo extends Component implements ActionListener {
     //************************************
     //  Your turn now:  Add more function below
     //************************************
+    public void resizeImage() {
+        int width = biFiltered.getWidth();
+        int height = biFiltered.getHeight();
 
+        int[][][] ImageArray = convertToArray(biFiltered);          //  Convert the image to array
+
+        // Image Negative Operation:
+        for(int y=0; y<height; y++){
+            for(int x =0; x<width; x++){
+                ImageArray[x][y][1] = Math.round(ImageArray[x][y][1] * intensify);  //r
+                if (ImageArray[x][y][1] <0){
+                    ImageArray[x][y][1] = 0;
+                }
+                else if(ImageArray[x][y][1] > 255){
+                    ImageArray[x][y][1]=255;
+                }
+                ImageArray[x][y][2] = Math.round(ImageArray[x][y][2] * intensify);  //g
+                if (ImageArray[x][y][2] <0){
+                    ImageArray[x][y][2] = 0;
+                }
+                else if(ImageArray[x][y][2] > 255){
+                    ImageArray[x][y][2]=255;
+                }
+                ImageArray[x][y][3] = Math.round(ImageArray[x][y][3] * intensify);  //b
+                if (ImageArray[x][y][3] <0){
+                    ImageArray[x][y][3] = 0;
+                }
+                else if(ImageArray[x][y][3] > 255){
+                    ImageArray[x][y][3]=255;
+                }
+            }
+        }
+
+        biFiltered = convertToBimage(ImageArray);  // Convert the array to BufferedImage
+    }
 
 
 
@@ -215,13 +264,15 @@ public class Demo extends Component implements ActionListener {
 
     public static void main(String s[]) {
         JFrame f = new JFrame("Image Processing Demo");
+        JPanel imagePanel = new JPanel();
         f.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {System.exit(0);}
         });
         Demo de = new Demo();
-        f.add("Center", de);
         Demo da = new Demo();
-        f.add("West", da);
+        imagePanel.add(da);
+        imagePanel.add(de);
+        f.add("Center", imagePanel);
         Button undoButton = new Button("Undo");
         undoButton.setActionCommand("Undo");
         undoButton.addActionListener(de);
@@ -231,6 +282,8 @@ public class Demo extends Component implements ActionListener {
         JComboBox formats = new JComboBox(de.getFormats());
         formats.setActionCommand("Formats");
         formats.addActionListener(de);
+        JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 200,100 );
+        //slider.
         JPanel panel = new JPanel();
         panel.add(undoButton);
         panel.add(choices);
