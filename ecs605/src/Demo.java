@@ -15,22 +15,24 @@ public class Demo extends Component implements ActionListener {
     String descs[] = {
             "Original",
             "Negative",
+            "Resize",
+            "Shift",
+            "Resize and Shift",
     };
 
     int opIndex;  //option index for
     int lastOp;
     float scale = 1f;
-    float intensify = 1f;
+    float intensify = 1.5f;
     private BufferedImage bi, biFiltered;   // the input image saved as bi;//
     int w, h;
 
     public Demo() {
         try {
-            bi = ImageIO.read(new File("images/mars.jpg"));
+            bi = ImageIO.read(new File("../images/mars.jpg"));
 
             w = bi.getWidth(null);
             h = bi.getHeight(null);
-            System.out.println(bi.getType());
             if (bi.getType() != BufferedImage.TYPE_INT_RGB) {
                 BufferedImage bi2 = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
                 Graphics big = bi2.getGraphics();
@@ -86,7 +88,7 @@ public class Demo extends Component implements ActionListener {
 
     public void paint(Graphics g) { //  Repaint will call this function so the image will change.
         filterImage();
-        resizeImage();
+        resizeImage(bi);
         g.drawImage(biFiltered, 0, 0,Math.round(w*scale),Math.round(h*scale), null);
     }
 
@@ -170,11 +172,11 @@ public class Demo extends Component implements ActionListener {
     //************************************
     //  Your turn now:  Add more function below
     //************************************
-    public void resizeImage() {
-        int width = biFiltered.getWidth();
-        int height = biFiltered.getHeight();
+    public BufferedImage resizeImage(BufferedImage image) {
+        int width = image.getWidth();
+        int height = image.getHeight();
 
-        int[][][] ImageArray = convertToArray(biFiltered);          //  Convert the image to array
+        int[][][] ImageArray = convertToArray(image);          //  Convert the image to array
 
         // Image Negative Operation:
         for(int y=0; y<height; y++){
@@ -203,9 +205,44 @@ public class Demo extends Component implements ActionListener {
             }
         }
 
-        biFiltered = convertToBimage(ImageArray);  // Convert the array to BufferedImage
+        return convertToBimage(ImageArray);  // Convert the array to BufferedImage
     }
 
+public BufferedImage PixelVShift(BufferedImage image) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        int[][][] ImageArray = convertToArray(image);          //  Convert the image to array
+
+        // Image Negative Operation:
+        for(int y=0; y<height; y++){
+            for(int x =0; x<width; x++){
+                ImageArray[x][y][1] = ImageArray[x][y][1] << 2;  //r
+                if (ImageArray[x][y][1] <0){
+                    ImageArray[x][y][1] = 0;
+                }
+                else if(ImageArray[x][y][1] > 255){
+                    ImageArray[x][y][1]=255;
+                }
+                ImageArray[x][y][2] = ImageArray[x][y][2] << 2;  //g
+                if (ImageArray[x][y][2] <0){
+                    ImageArray[x][y][2] = 0;
+                }
+                else if(ImageArray[x][y][2] > 255){
+                    ImageArray[x][y][2]=255;
+                }
+                ImageArray[x][y][3] = ImageArray[x][y][3] << 2;  //b
+                if (ImageArray[x][y][3] <0){
+                    ImageArray[x][y][3] = 0;
+                }
+                else if(ImageArray[x][y][3] > 255){
+                    ImageArray[x][y][3]=255;
+                }
+            }
+        }
+
+        return convertToBimage(ImageArray);  // Convert the array to BufferedImage
+    }
 
 
     //************************************
@@ -222,8 +259,16 @@ public class Demo extends Component implements ActionListener {
                 return;
             case 1: biFiltered = ImageNegative(bi); /* Image Negative */
                 return;
+            case 2: biFiltered = resizeImage(bi); /* Resize Image */
+                return;
+            case 3: biFiltered = PixelVShift(bi); /* Pixel Value Shift */
+                return;
+            case 4: biFiltered = PixelVShift(bi); /* Pixel Value Shift */
+                biFiltered = resizeImage(biFiltered); /* Resize Image */
+                return;
             //************************************
-            // case 2:
+            // case x:
+            //      biFiltered = function(bi); /* coment */
             //      return;
             //************************************
 
@@ -244,6 +289,10 @@ public class Demo extends Component implements ActionListener {
             JComboBox cb = (JComboBox) e.getSource();
             if (cb.getActionCommand().equals("SetFilter")) {
                 setOpIndex(cb.getSelectedIndex());
+                repaint();
+            }
+            else if (cb.getActionCommand().equals("SetFloat")) {
+                intensify = cb.getSelectedIndex();
                 repaint();
             } else if (cb.getActionCommand().equals("Formats")) {
                 String format = (String) cb.getSelectedItem();
@@ -279,14 +328,16 @@ public class Demo extends Component implements ActionListener {
         JComboBox choices = new JComboBox(de.getDescriptions());
         choices.setActionCommand("SetFilter");
         choices.addActionListener(de);
+        JComboBox floats = new JComboBox(de.getFormats());
+        floats.setActionCommand("SetFloat");
+        floats.addActionListener(de);
         JComboBox formats = new JComboBox(de.getFormats());
         formats.setActionCommand("Formats");
         formats.addActionListener(de);
-        JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 200,100 );
-        //slider.
         JPanel panel = new JPanel();
         panel.add(undoButton);
         panel.add(choices);
+        panel.add(floats);
         panel.add(new JLabel("Save As"));
         panel.add(formats);
         f.add("North", panel);
